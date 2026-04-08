@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -53,6 +54,16 @@ class _HomePageState extends State<HomePage> {
     return 'R\$ ${v.toStringAsFixed(2).replaceFirst('.', ',')}';
   }
 
+  String _formatPercent(double v) {
+    final sign = v >= 0 ? '+' : '';
+    return '$sign${v.toStringAsFixed(2).replaceFirst('.', ',')}%';
+  }
+
+  double _dailyProfitPct(FinanceSummary s) {
+    if (s.investedBalance == 0) return 0;
+    return (s.dailyProfit / s.investedBalance) * 100;
+  }
+
   List<double> _chartPoints() {
     final s = _summary;
     if (s != null && s.performancePoints.length > 1) {
@@ -78,105 +89,145 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'OISM Capital Tech',
-                    textAlign: TextAlign.center,
+                    'Oism Capital Tech',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 22,
-                          color: AppColors.textPrimary,
-                          shadows: [
-                            Shadow(
-                              color: AppColors.neonCyan.withValues(alpha: 0.35),
-                              blurRadius: 18,
-                            ),
-                          ],
+                      fontSize: 22,
+                      color: AppColors.textPrimary,
+                      shadows: [
+                        Shadow(
+                          color: AppColors.neonCyan.withValues(alpha: 0.35),
+                          blurRadius: 18,
                         ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Inteligência e performance em um só lugar',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.95)),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: AppColors.neonCyan,
+                        ),
+                        tooltip: 'Notificações',
+                      ),
+                      const Spacer(),
+                      const Text(
+                        '13:58',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Saldo investido',
-                                  style: TextStyle(
-                                    color: AppColors.textMuted.withValues(alpha: 0.95),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () => setState(() => _hideBalance = !_hideBalance),
-                                icon: Icon(
-                                  _hideBalance ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                  color: AppColors.neonCyan,
-                                ),
-                                tooltip: _hideBalance ? 'Mostrar valor' : 'Ocultar valor',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          if (_loading)
-                            const LinearProgressIndicator(minHeight: 2)
-                          else
-                            Text(
-                              summary == null
-                                  ? '—'
-                                  : _hideBalance
-                                      ? '••••••'
-                                      : _formatMoney(summary.investedBalance),
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.2,
-                              ),
+                  const SizedBox(height: 14),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.neonCyan.withValues(alpha: 0.14),
+                          blurRadius: 26,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withValues(alpha: 0.48),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.neonCyan.withValues(alpha: 0.28),
                             ),
-                          const SizedBox(height: 14),
-                          Row(
-                            children: [
-                              Text(
-                                'Lucro do dia',
-                                style: TextStyle(
-                                  color: AppColors.textMuted.withValues(alpha: 0.95),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  summary == null
-                                      ? '—'
-                                      : _hideBalance
-                                          ? '••••'
-                                          : _formatMoney(summary.dailyProfit),
-                                  textAlign: TextAlign.right,
-                                  style: const TextStyle(
-                                    color: AppColors.neonGreen,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    shadows: [
-                                      Shadow(
-                                        color: AppColors.neonGreen,
-                                        blurRadius: 14,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
-                        ],
+                          child: Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Saldo Investido',
+                                        style: TextStyle(
+                                          color: AppColors.textMuted.withValues(alpha: 0.95),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => setState(() => _hideBalance = !_hideBalance),
+                                      icon: Icon(
+                                        _hideBalance ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        color: AppColors.neonCyan,
+                                      ),
+                                      tooltip: _hideBalance ? 'Mostrar valor' : 'Ocultar valor',
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                if (_loading)
+                                  const LinearProgressIndicator(minHeight: 2)
+                                else
+                                  Text(
+                                    summary == null
+                                        ? '—'
+                                        : _hideBalance
+                                            ? '••••••'
+                                            : _formatMoney(summary.investedBalance),
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Lucro do dia',
+                                      style: TextStyle(
+                                        color: AppColors.textMuted.withValues(alpha: 0.95),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        summary == null
+                                            ? '—'
+                                            : _hideBalance
+                                                ? '••••'
+                                                : _formatPercent(_dailyProfitPct(summary)),
+                                        textAlign: TextAlign.right,
+                                        style: const TextStyle(
+                                          color: AppColors.neonGreen,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          shadows: [
+                                            Shadow(
+                                              color: AppColors.neonGreen,
+                                              blurRadius: 14,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -189,16 +240,67 @@ class _HomePageState extends State<HomePage> {
                   ],
                   const SizedBox(height: 18),
                   const Center(child: RobotTraderIllustration(size: 210)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Robô em operação... Gerando rendimento automático',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.neonCyan,
+                            foregroundColor: AppColors.background,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () {},
+                          child: const Text(
+                            'Depositar',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textMuted,
+                            side: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.4)),
+                            backgroundColor: AppColors.surface.withValues(alpha: 0.55),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () {},
+                          icon: const Icon(Icons.lock_outline_rounded, size: 18),
+                          label: const Text(
+                            'Sacar',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 18),
                   Text(
-                    'Rendimento (curva)',
+                    'Gráfico de Rendimentos',
                     style: TextStyle(
                       color: AppColors.textMuted.withValues(alpha: 0.95),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  PerformanceLineChart(points: _chartPoints()),
+                  PerformanceLineChart(
+                    points: _chartPoints(),
+                    leftAxisLabel: 'R\$100',
+                    bottomAxisLabels: const ['Mês 1', 'Mês 2', 'Mês 3'],
+                  ),
                 ],
               ),
             ),

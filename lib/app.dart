@@ -9,7 +9,7 @@ class OismApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'OISM Capital Tech',
+      title: 'Oism Capital Tech',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
       home: const MainShell(),

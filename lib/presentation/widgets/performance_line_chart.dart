@@ -4,9 +4,16 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 
 class PerformanceLineChart extends StatelessWidget {
-  const PerformanceLineChart({super.key, required this.points});
+  const PerformanceLineChart({
+    super.key,
+    required this.points,
+    this.leftAxisLabel,
+    this.bottomAxisLabels,
+  });
 
   final List<double> points;
+  final String? leftAxisLabel;
+  final List<String>? bottomAxisLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +57,16 @@ class PerformanceLineChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 44,
                 getTitlesWidget: (value, meta) {
+                  if (leftAxisLabel != null) {
+                    final center = (minY + maxY) / 2;
+                    if ((value - center).abs() > (maxY - minY) * 0.2) {
+                      return const SizedBox.shrink();
+                    }
+                    return Text(
+                      leftAxisLabel!,
+                      style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.75), fontSize: 10),
+                    );
+                  }
                   return Text(
                     value.toStringAsFixed(0),
                     style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.75), fontSize: 10),
@@ -63,9 +80,23 @@ class PerformanceLineChart extends StatelessWidget {
                 reservedSize: 22,
                 getTitlesWidget: (value, meta) {
                   final i = value.round();
-                  if (i % 2 != 0 || i < 0 || i >= points.length) {
+                  if (bottomAxisLabels != null && bottomAxisLabels!.isNotEmpty) {
+                    final step = bottomAxisLabels!.length == 1 ? 0.0 : (points.length - 1) / (bottomAxisLabels!.length - 1);
+                    for (var idx = 0; idx < bottomAxisLabels!.length; idx++) {
+                      final targetX = idx * step;
+                      if ((value - targetX).abs() <= 0.35) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            bottomAxisLabels![idx],
+                            style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.65), fontSize: 10),
+                          ),
+                        );
+                      }
+                    }
                     return const SizedBox.shrink();
                   }
+                  if (i % 2 != 0 || i < 0 || i >= points.length) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
