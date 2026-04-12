@@ -4,11 +4,11 @@ class FinanceSummary {
     required this.investedBalance,
     required this.dailyProfit,
     required this.performancePoints,
+    this.valorEscondido = false,
   });
 
   final double investedBalance;
   final double dailyProfit;
-
-  /// Pontos normalizados para o gráfico (ex.: rendimento acumulado).
   final List<double> performancePoints;
+  final bool valorEscondido;
 }

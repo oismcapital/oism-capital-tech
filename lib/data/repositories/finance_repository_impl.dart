@@ -23,10 +23,10 @@ class FinanceRepositoryImpl implements FinanceRepository {
       investedBalance: dto.investedBalance,
       dailyProfit: dto.dailyProfit,
       performancePoints: points,
+      valorEscondido: dto.valorEscondido,
     );
   }
 
-  /// Curva ascendente padrão caso a API não envie pontos (útil em desenvolvimento).
   static List<double> _defaultAscendingCurve() {
     return List<double>.generate(12, (i) => 100 + i * 18 + (i * i).toDouble() * 0.4);
   }

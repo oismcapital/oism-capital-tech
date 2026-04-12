@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../ganhos/ganhos_page.dart';
 import '../home/home_page.dart';
+import '../indicar/indicar_page.dart';
 import '../invest/invest_page.dart';
 import '../perfil/perfil_page.dart';
 
@@ -10,29 +11,34 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _index = 0;
 
-  static const _titles = ['Home', 'Investir', 'Ganhos', 'Perfil'];
+  static const _titles = ['Home', 'Investir', 'Ganhos', 'Indicar', 'Perfil'];
+
+  void goTo(int index) {
+    if (index >= 0 && index < _titles.length) {
+      setState(() => _index = index);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _index == 0
           ? null
-          : AppBar(
-              title: Text(_titles[_index]),
-            ),
+          : AppBar(title: Text(_titles[_index])),
       body: IndexedStack(
         index: _index,
-        children: const [
-          HomePage(),
-          InvestPage(),
-          GanhosPage(),
-          PerfilPage(),
+        children: [
+          HomePage(onDepositar: () => goTo(1)),
+          const InvestPage(),
+          const GanhosPage(),
+          const IndicarPage(),
+          const PerfilPage(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -53,6 +59,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.payments_outlined),
             selectedIcon: Icon(Icons.payments),
             label: 'Ganhos',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: 'Indicar',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

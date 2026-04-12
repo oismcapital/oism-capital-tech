@@ -22,19 +22,14 @@ class AuthRepositoryImpl implements AuthRepository {
       userId: dto.userId,
     );
     _session = session;
-    TokenHolder.accessToken = session.accessToken;
+    await TokenHolder.setToken(session.accessToken);
     return session;
   }
 
   @override
   Future<void> logout() async {
-    try {
-      await _authService.logout(refreshToken: _session?.refreshToken);
-    } catch (_) {
-      // Limpa sessão local mesmo se o backend falhar.
-    }
     _session = null;
-    TokenHolder.clear();
+    await TokenHolder.clear();
   }
 
   @override

@@ -3,6 +3,7 @@ class FinanceSummaryDto {
     required this.investedBalance,
     required this.dailyProfit,
     this.performancePoints,
+    this.valorEscondido = false,
   });
 
   factory FinanceSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -15,6 +16,7 @@ class FinanceSummaryDto {
       investedBalance: _readDouble(json['investedBalance'] ?? json['balance'] ?? json['saldo']),
       dailyProfit: _readDouble(json['dailyProfit'] ?? json['lucroDia'] ?? json['profit']),
       performancePoints: points,
+      valorEscondido: json['valorEscondido'] as bool? ?? false,
     );
   }
 
@@ -27,4 +29,5 @@ class FinanceSummaryDto {
   final double investedBalance;
   final double dailyProfit;
   final List<double>? performancePoints;
+  final bool valorEscondido;
 }

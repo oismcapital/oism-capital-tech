@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../auth/auth_screen.dart';
 
 class PerfilPage extends StatelessWidget {
   const PerfilPage({super.key});
@@ -35,8 +36,9 @@ class PerfilPage extends StatelessWidget {
             onPressed: () async {
               await context.read<AuthRepository>().logout();
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sessão encerrada (local).')),
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const AuthScreen()),
+                (_) => false,
               );
             },
             icon: const Icon(Icons.logout, color: AppColors.neonCyan),

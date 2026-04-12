@@ -3,13 +3,16 @@ import 'dart:ui';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/services/finance_service.dart';
 import '../../domain/entities/finance_summary.dart';
 import '../../domain/repositories/finance_repository.dart';
 import '../widgets/performance_line_chart.dart';
 import '../widgets/robot_trader_illustration.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.onDepositar});
+
+  final VoidCallback? onDepositar;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -39,6 +42,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       setState(() {
         _summary = s;
+        _hideBalance = s.valorEscondido;
         _loading = false;
       });
     } catch (e) {
@@ -164,7 +168,11 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     IconButton(
-                                      onPressed: () => setState(() => _hideBalance = !_hideBalance),
+                                      onPressed: () {
+                                        final newVal = !_hideBalance;
+                                        setState(() => _hideBalance = newVal);
+                                        context.read<FinanceService>().updatePreferences(valorEscondido: newVal).ignore();
+                                      },
                                       icon: Icon(
                                         _hideBalance ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                         color: AppColors.neonCyan,
@@ -260,7 +268,9 @@ class _HomePageState extends State<HomePage> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            widget.onDepositar?.call();
+                          },
                           child: const Text(
                             'Depositar',
                             style: TextStyle(fontWeight: FontWeight.w700),

@@ -2,15 +2,11 @@ import 'package:dio/dio.dart';
 
 import '../models/finance_summary_dto.dart';
 
-/// Cliente HTTP para dados financeiros na API Spring Boot.
-///
-/// Ajuste o path conforme seu controller (ex.: `@GetMapping("/api/finance/summary")`).
 class FinanceService {
   FinanceService(this._dio);
 
   final Dio _dio;
 
-  /// Ex.: `GET /api/finance/summary`
   Future<FinanceSummaryDto> getSummary() async {
     final response = await _dio.get<Map<String, dynamic>>('/api/finance/summary');
     final data = response.data;
@@ -21,5 +17,12 @@ class FinanceService {
       );
     }
     return FinanceSummaryDto.fromJson(data);
+  }
+
+  Future<void> updatePreferences({required bool valorEscondido}) async {
+    await _dio.patch<void>(
+      '/api/wallet/preferences',
+      data: {'valorEscondido': valorEscondido},
+    );
   }
 }
