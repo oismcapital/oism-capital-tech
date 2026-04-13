@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app.dart';
 import '../../core/theme/app_colors.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../auth/auth_screen.dart';
 
 class PerfilPage extends StatelessWidget {
   const PerfilPage({super.key});
@@ -35,11 +35,7 @@ class PerfilPage extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () async {
               await context.read<AuthRepository>().logout();
-              if (!context.mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const AuthScreen()),
-                (_) => false,
-              );
+              authNotifier.value = false;
             },
             icon: const Icon(Icons.logout, color: AppColors.neonCyan),
             label: const Text('Sair'),

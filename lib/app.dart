@@ -5,6 +5,9 @@ import 'core/theme/app_theme.dart';
 import 'presentation/auth/auth_screen.dart';
 import 'presentation/shell/main_shell.dart';
 
+/// Notifier global para controlar autenticação sem perder os providers.
+final authNotifier = ValueNotifier<bool>(false);
+
 class OismApp extends StatefulWidget {
   const OismApp({super.key});
 
@@ -14,7 +17,6 @@ class OismApp extends StatefulWidget {
 
 class _OismAppState extends State<OismApp> {
   bool _initialized = false;
-  bool _hasToken = false;
 
   @override
   void initState() {
@@ -24,12 +26,8 @@ class _OismAppState extends State<OismApp> {
 
   Future<void> _init() async {
     await TokenHolder.initialize();
-    if (mounted) {
-      setState(() {
-        _hasToken = TokenHolder.accessToken != null;
-        _initialized = true;
-      });
-    }
+    authNotifier.value = TokenHolder.accessToken != null;
+    if (mounted) setState(() => _initialized = true);
   }
 
   @override
@@ -45,9 +43,12 @@ class _OismAppState extends State<OismApp> {
                 child: CircularProgressIndicator(color: Color(0xFF00E5FF)),
               ),
             )
-          : _hasToken
-              ? const MainShell()
-              : const AuthScreen(),
+          : ValueListenableBuilder<bool>(
+              valueListenable: authNotifier,
+              builder: (_, isLoggedIn, __) {
+                return isLoggedIn ? const MainShell() : const AuthScreen();
+              },
+            ),
     );
   }
 }

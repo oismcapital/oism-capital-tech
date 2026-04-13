@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app.dart';
 import '../../core/auth/token_holder.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/services/auth_service.dart';
-import '../shell/main_shell.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -14,24 +14,34 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
   final _loginFormKey = GlobalKey<FormState>();
   final _loginEmailCtrl = TextEditingController();
   final _loginSenhaCtrl = TextEditingController();
   bool _loginLoading = false;
+  String? _loginError;
 
   final _registerFormKey = GlobalKey<FormState>();
   final _registerNomeCtrl = TextEditingController();
   final _registerEmailCtrl = TextEditingController();
   final _registerSenhaCtrl = TextEditingController();
   bool _registerLoading = false;
+  String? _registerError;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      // Limpa erros ao trocar de aba
+      setState(() {
+        _loginError = null;
+        _registerError = null;
+      });
+    });
   }
 
   @override
@@ -45,15 +55,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  void _showSnack(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: AppColors.surface,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  String _extractErrorMessage(DioException e) {
+    try {
+      final data = e.response?.data;
+      if (data is Map && data['error'] != null) {
+        return data['error'].toString();
+      }
+      if (data is String && data.isNotEmpty) return data;
+    } catch (_) {}
+
+    final status = e.response?.statusCode;
+    if (status == 404) return 'Usuário não encontrado. Faça seu cadastro.';
+    if (status == 401) return 'Senha incorreta.';
+    if (status == 400) return 'Dados inválidos.';
+    if (status == 409) return 'Este email já está em uso.';
+    return 'Sem conexão com o servidor';
   }
 
   String? _validateEmail(String? v) {
@@ -70,6 +86,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _login() async {
+    setState(() => _loginError = null);
     if (!_loginFormKey.currentState!.validate()) return;
     setState(() => _loginLoading = true);
     try {
@@ -79,25 +96,18 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         password: _loginSenhaCtrl.text,
       );
       await TokenHolder.setToken(resp.accessToken);
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
+      authNotifier.value = true;
     } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      if (status == 401 || status == 403) {
-        _showSnack('Email ou senha inválidos');
-      } else {
-        _showSnack('Sem conexão com o servidor');
-      }
+      setState(() => _loginError = _extractErrorMessage(e));
     } catch (_) {
-      _showSnack('Sem conexão com o servidor');
+      setState(() => _loginError = 'Sem conexão com o servidor');
     } finally {
       if (mounted) setState(() => _loginLoading = false);
     }
   }
 
   Future<void> _register() async {
+    setState(() => _registerError = null);
     if (!_registerFormKey.currentState!.validate()) return;
     setState(() => _registerLoading = true);
     try {
@@ -108,19 +118,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         senha: _registerSenhaCtrl.text,
       );
       await TokenHolder.setToken(resp.accessToken);
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
+      authNotifier.value = true;
     } on DioException catch (e) {
-      final body = e.response?.data?.toString() ?? '';
-      if (body.contains('ja cadastrado') || body.contains('already') || e.response?.statusCode == 409) {
-        _showSnack('Este email já está em uso');
-      } else {
-        _showSnack('Sem conexão com o servidor');
-      }
+      setState(() => _registerError = _extractErrorMessage(e));
     } catch (_) {
-      _showSnack('Sem conexão com o servidor');
+      setState(() => _registerError = 'Sem conexão com o servidor');
     } finally {
       if (mounted) setState(() => _registerLoading = false);
     }
@@ -143,7 +145,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontSize: 24,
                   color: AppColors.neonCyan,
-                  shadows: [Shadow(color: AppColors.neonCyan.withValues(alpha: 0.5), blurRadius: 20)],
+                  shadows: [
+                    Shadow(
+                      color: AppColors.neonCyan.withValues(alpha: 0.5),
+                      blurRadius: 20,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
@@ -157,7 +164,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.neonCyan.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: TabBar(
                   controller: _tabController,
@@ -182,15 +191,52 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
   }
 
+  Widget _errorBox(String msg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              msg,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLogin() {
     return Form(
       key: _loginFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _field(controller: _loginEmailCtrl, label: 'Email', keyboardType: TextInputType.emailAddress, validator: _validateEmail),
+          _field(
+            controller: _loginEmailCtrl,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
+            validator: _validateEmail,
+          ),
           const SizedBox(height: 14),
-          _field(controller: _loginSenhaCtrl, label: 'Senha', obscure: true, validator: _validateSenha),
+          _field(
+            controller: _loginSenhaCtrl,
+            label: 'Senha',
+            obscure: true,
+            validator: _validateSenha,
+          ),
+          if (_loginError != null) ...[
+            const SizedBox(height: 14),
+            _errorBox(_loginError!),
+          ],
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _loginLoading ? null : _login,
@@ -198,11 +244,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               backgroundColor: AppColors.neonCyan,
               foregroundColor: AppColors.background,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: _loginLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                : const Text('Entrar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.background,
+                    ),
+                  )
+                : const Text(
+                    'Entrar',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
           ),
         ],
       ),
@@ -215,11 +273,30 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _field(controller: _registerNomeCtrl, label: 'Nome completo', validator: (v) => (v == null || v.trim().isEmpty) ? 'Informe o nome' : null),
+          _field(
+            controller: _registerNomeCtrl,
+            label: 'Nome completo',
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Informe o nome' : null,
+          ),
           const SizedBox(height: 14),
-          _field(controller: _registerEmailCtrl, label: 'Email', keyboardType: TextInputType.emailAddress, validator: _validateEmail),
+          _field(
+            controller: _registerEmailCtrl,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
+            validator: _validateEmail,
+          ),
           const SizedBox(height: 14),
-          _field(controller: _registerSenhaCtrl, label: 'Senha', obscure: true, validator: _validateSenha),
+          _field(
+            controller: _registerSenhaCtrl,
+            label: 'Senha',
+            obscure: true,
+            validator: _validateSenha,
+          ),
+          if (_registerError != null) ...[
+            const SizedBox(height: 14),
+            _errorBox(_registerError!),
+          ],
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _registerLoading ? null : _register,
@@ -227,11 +304,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               backgroundColor: AppColors.neonCyan,
               foregroundColor: AppColors.background,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: _registerLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                : const Text('Cadastrar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.background,
+                    ),
+                  )
+                : const Text(
+                    'Cadastrar',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
           ),
         ],
       ),
@@ -258,11 +347,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.25)),
+          borderSide:
+              BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.25)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.25)),
+          borderSide:
+              BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.25)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
