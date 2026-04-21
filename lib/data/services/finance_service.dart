@@ -28,10 +28,10 @@ class FinanceService {
 
   Future<void> withdraw({required double amount, required String pixKey}) async {
     await _dio.post<void>(
-      '/api/wallet/withdraw',
+      '/api/v1/withdrawals',
       data: {
-        'valor': amount,
-        'descricao': 'Saque PIX para $pixKey',
+        'amount': amount,
+        'pixKey': pixKey,
       },
     );
   }
