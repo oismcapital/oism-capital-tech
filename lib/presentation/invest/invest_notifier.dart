@@ -44,4 +44,15 @@ class InvestNotifier extends ChangeNotifier {
       return e.toString();
     }
   }
+
+  /// Contrata um plano debitando do saldo. Retorna null em sucesso ou mensagem de erro.
+  Future<String?> purchase(String planId) async {
+    try {
+      await _repository.purchase(planId);
+      await load(); // recarrega lista de investimentos ativos
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
 }

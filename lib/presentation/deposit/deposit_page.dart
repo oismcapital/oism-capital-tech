@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -52,7 +53,8 @@ class _DepositPageState extends State<DepositPage> {
     }
 
     if (notifier.deposit != null) {
-      await DepositPixSheet.show(context, notifier.deposit!);
+      final dio = context.read<Dio>();
+      await DepositPixSheet.show(context, notifier.deposit!, dio);
     }
   }
 

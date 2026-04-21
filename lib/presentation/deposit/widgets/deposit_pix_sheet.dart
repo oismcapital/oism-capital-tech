@@ -5,22 +5,27 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/deposit_pix_dto.dart';
 
 class DepositPixSheet extends StatefulWidget {
-  const DepositPixSheet({super.key, required this.deposit});
+  const DepositPixSheet({
+    super.key,
+    required this.deposit,
+    required this.dio,
+  });
 
   final DepositPixDto deposit;
+  final Dio dio;
 
-  static Future<void> show(BuildContext context, DepositPixDto deposit) {
+  static Future<void> show(
+      BuildContext context, DepositPixDto deposit, Dio dio) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DepositPixSheet(deposit: deposit),
+      builder: (_) => DepositPixSheet(deposit: deposit, dio: dio),
     );
   }
 
@@ -48,8 +53,7 @@ class _DepositPixSheetState extends State<DepositPixSheet> {
   void _startPolling() {
     _timer = Timer.periodic(const Duration(seconds: 5), (_) async {
       try {
-        final dio = context.read<Dio>();
-        final res = await dio.get<Map<String, dynamic>>(
+        final res = await widget.dio.get<Map<String, dynamic>>(
           '/api/v1/payments/${widget.deposit.transactionId}/status',
         );
         final status = res.data?['status'] as String? ?? 'PENDING';
