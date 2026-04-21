@@ -1,6 +1,8 @@
 class FinanceSummaryDto {
   FinanceSummaryDto({
-    required this.investedBalance,
+    required this.walletBalance,
+    required this.totalInvested,
+    required this.totalAccruedInterest,
     required this.dailyProfit,
     this.performancePoints,
     this.valorEscondido = false,
@@ -13,7 +15,9 @@ class FinanceSummaryDto {
       points = rawPoints.map((e) => (e as num).toDouble()).toList();
     }
     return FinanceSummaryDto(
-      investedBalance: _readDouble(json['investedBalance'] ?? json['balance'] ?? json['saldo']),
+      walletBalance: _readDouble(json['walletBalance'] ?? json['investedBalance'] ?? json['saldo']),
+      totalInvested: _readDouble(json['totalInvested']),
+      totalAccruedInterest: _readDouble(json['totalAccruedInterest']),
       dailyProfit: _readDouble(json['dailyProfit'] ?? json['lucroDia'] ?? json['profit']),
       performancePoints: points,
       valorEscondido: json['valorEscondido'] as bool? ?? false,
@@ -26,7 +30,9 @@ class FinanceSummaryDto {
     return double.tryParse(v.toString()) ?? 0;
   }
 
-  final double investedBalance;
+  final double walletBalance;
+  final double totalInvested;
+  final double totalAccruedInterest;
   final double dailyProfit;
   final List<double>? performancePoints;
   final bool valorEscondido;

@@ -20,7 +20,9 @@ class FinanceRepositoryImpl implements FinanceRepository {
       points = _defaultAscendingCurve();
     }
     return FinanceSummary(
-      investedBalance: dto.investedBalance,
+      walletBalance: dto.walletBalance,
+      totalInvested: dto.totalInvested,
+      totalAccruedInterest: dto.totalAccruedInterest,
       dailyProfit: dto.dailyProfit,
       performancePoints: points,
       valorEscondido: dto.valorEscondido,

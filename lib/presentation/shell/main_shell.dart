@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../deposit/deposit_page.dart';
+import '../deposit/deposit_notifier.dart';
 import '../ganhos/ganhos_page.dart';
 import '../home/home_page.dart';
 import '../indicar/indicar_page.dart';
 import '../payment/plan_selection_screen.dart';
 import '../perfil/perfil_page.dart';
+import '../withdraw/withdraw_page.dart';
+import 'package:provider/provider.dart';
+import '../../core/network/dio_client.dart';
+import 'package:dio/dio.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -17,11 +23,8 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   int _index = 0;
 
-  // "Investir" (índice 1) não ocupa slot no IndexedStack — abre como rota
-  // Os demais índices mapeiam: 0→Home, 2→Ganhos, 3→Indicar, 4→Perfil
   static const _titles = ['Home', 'Investir', 'Ganhos', 'Indicar', 'Perfil'];
 
-  // Converte índice da NavBar para índice do IndexedStack (pula o 1)
   int get _stackIndex => _index > 1 ? _index - 1 : _index;
 
   void goTo(int index) {
@@ -30,21 +33,36 @@ class MainShellState extends State<MainShell> {
     }
   }
 
+  void _openDeposit() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (c) => DepositNotifier(c.read<Dio>()),
+          child: const DepositPage(),
+        ),
+      ),
+    );
+  }
+
   void _openPlanSelection() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PlanSelectionScreen()),
     );
   }
 
+  void _openWithdraw() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const WithdrawPage()),
+    );
+  }
+
   void _onNavTap(int i) {
-    // Investir (índice 1) abre a PlanSelectionScreen como rota
     if (i == 1) {
       _openPlanSelection();
       return;
     }
     setState(() => _index = i);
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,7 +72,7 @@ class MainShellState extends State<MainShell> {
       body: IndexedStack(
         index: _stackIndex,
         children: [
-          HomePage(onDepositar: _openPlanSelection),
+          HomePage(onDepositar: _openDeposit, onSacar: _openWithdraw),
           const GanhosPage(),
           const IndicarPage(),
           const PerfilPage(),

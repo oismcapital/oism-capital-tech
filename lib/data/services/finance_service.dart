@@ -25,4 +25,14 @@ class FinanceService {
       data: {'valorEscondido': valorEscondido},
     );
   }
+
+  Future<void> withdraw({required double amount, required String pixKey}) async {
+    await _dio.post<void>(
+      '/api/wallet/withdraw',
+      data: {
+        'valor': amount,
+        'descricao': 'Saque PIX para $pixKey',
+      },
+    );
+  }
 }

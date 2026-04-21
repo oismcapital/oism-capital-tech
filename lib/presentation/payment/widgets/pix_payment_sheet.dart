@@ -101,7 +101,7 @@ class PixPaymentSheet extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Plano ${deposit.planName} ativado com sucesso.',
+          'R\$ ${deposit.amount.toStringAsFixed(2).replaceAll('.', ',')} adicionado ao seu saldo.',
           style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
         ),
         const SizedBox(height: 28),

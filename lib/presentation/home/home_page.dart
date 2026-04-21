@@ -10,8 +10,9 @@ import '../widgets/performance_line_chart.dart';
 import '../widgets/robot_trader_illustration.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, this.onDepositar});
+  const HomePage({super.key, this.onDepositar, this.onSacar});
   final VoidCallback? onDepositar;
+  final VoidCallback? onSacar;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -213,7 +214,7 @@ class _HomePageState extends State<HomePage>
                       Row(
                         children: [
                           Text(
-                            'Saldo Investido',
+                            'Saldo em Conta',
                             style: TextStyle(
                               color: AppColors.textMuted.withValues(alpha: 0.9),
                               fontSize: 13,
@@ -248,11 +249,11 @@ class _HomePageState extends State<HomePage>
                               )
                             else
                               Text(
-                                s == null
-                                    ? '—'
-                                    : _hideBalance
-                                        ? '••••••'
-                                        : _fmt(s.investedBalance),
+                            s == null
+                                ? '—'
+                                : _hideBalance
+                                    ? '••••••'
+                                    : _fmt(s.walletBalance),
                                 style: const TextStyle(
                                   color: AppColors.textPrimary,
                                   fontSize: 22,
@@ -417,7 +418,7 @@ class _HomePageState extends State<HomePage>
         const SizedBox(width: 12),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: widget.onSacar,
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textMuted,
               side: BorderSide(
@@ -428,7 +429,7 @@ class _HomePageState extends State<HomePage>
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            icon: const Icon(Icons.lock_rounded, size: 16),
+            icon: const Icon(Icons.arrow_upward_rounded, size: 16),
             label: const Text(
               'Sacar',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
