@@ -15,21 +15,13 @@ class FinanceRepositoryImpl implements FinanceRepository {
   }
 
   FinanceSummary _map(FinanceSummaryDto dto) {
-    var points = dto.performancePoints;
-    if (points == null || points.isEmpty) {
-      points = _defaultAscendingCurve();
-    }
     return FinanceSummary(
       walletBalance: dto.walletBalance,
       totalInvested: dto.totalInvested,
       totalAccruedInterest: dto.totalAccruedInterest,
       dailyProfit: dto.dailyProfit,
-      performancePoints: points,
+      performancePoints: dto.performancePoints ?? [],
       valorEscondido: dto.valorEscondido,
     );
-  }
-
-  static List<double> _defaultAscendingCurve() {
-    return List<double>.generate(12, (i) => 100 + i * 18 + (i * i).toDouble() * 0.4);
   }
 }

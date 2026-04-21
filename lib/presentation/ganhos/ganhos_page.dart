@@ -9,12 +9,14 @@ class GanhosPage extends StatefulWidget {
   const GanhosPage({super.key});
 
   @override
-  State<GanhosPage> createState() => _GanhosPageState();
+  State<GanhosPage> createState() => GanhosPageState();
 }
 
-class _GanhosPageState extends State<GanhosPage> {
+class GanhosPageState extends State<GanhosPage> {
+  void reload() => _load();
   List<Investment> _investments = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -24,11 +26,12 @@ class _GanhosPageState extends State<GanhosPage> {
 
   Future<void> _load() async {
     if (!mounted) return;
-    setState(() => _loading = true);
+    setState(() { _loading = true; _error = null; });
     try {
       final all = await context.read<InvestmentRepository>().listAll();
       if (mounted) setState(() => _investments = all);
-    } catch (_) {
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -44,10 +47,34 @@ class _GanhosPageState extends State<GanhosPage> {
           child: CircularProgressIndicator(color: AppColors.neonCyan));
     }
 
-    final totalReceived = _investments.fold(
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+              const SizedBox(height: 12),
+              Text(_error!, textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.textMuted)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _load,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.neonCyan,
+                    foregroundColor: AppColors.background),
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final totalInterest = _investments.fold(
         0.0, (s, i) => s + (i.isMatured ? i.projectedTotalInterest : i.accruedInterest));
-    final totalPrincipal =
-        _investments.fold(0.0, (s, i) => s + i.principal);
+    final totalPrincipal = _investments.fold(0.0, (s, i) => s + i.principal);
 
     return RefreshIndicator(
       color: AppColors.neonCyan,
@@ -59,18 +86,16 @@ class _GanhosPageState extends State<GanhosPage> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSummaryCard(totalPrincipal, totalReceived),
-                  const SizedBox(height: 16),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Histórico de Contratos',
-                      style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700),
-                    ),
+                  _buildSummaryCard(totalPrincipal, totalInterest),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Meus Contratos (${_investments.length})',
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -81,7 +106,8 @@ class _GanhosPageState extends State<GanhosPage> {
             const SliverFillRemaining(
               child: Center(
                 child: Text(
-                  'Nenhum contrato encontrado.',
+                  'Nenhum contrato encontrado.\nInvista em um plano para começar.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textMuted),
                 ),
               ),
@@ -91,7 +117,7 @@ class _GanhosPageState extends State<GanhosPage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (ctx, i) => _HistoryItem(investment: _investments[i]),
+                  (ctx, i) => _ContractCard(investment: _investments[i]),
                   childCount: _investments.length,
                 ),
               ),
@@ -111,8 +137,7 @@ class _GanhosPageState extends State<GanhosPage> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: AppColors.neonGreen.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.neonGreen.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -132,7 +157,7 @@ class _GanhosPageState extends State<GanhosPage> {
           Row(
             children: [
               Expanded(
-                child: _GainsTile(
+                child: _SummaryTile(
                   label: 'Total Aportado',
                   value: _fmt(principal),
                   color: AppColors.neonCyan,
@@ -140,7 +165,7 @@ class _GanhosPageState extends State<GanhosPage> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _GainsTile(
+                child: _SummaryTile(
                   label: 'Total em Juros',
                   value: _fmt(interest),
                   color: AppColors.neonGreen,
@@ -154,8 +179,10 @@ class _GanhosPageState extends State<GanhosPage> {
   }
 }
 
-class _GainsTile extends StatelessWidget {
-  const _GainsTile(
+// ── Summary tile ───────────────────────────────────────────────────────────────
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile(
       {required this.label, required this.value, required this.color});
 
   final String label;
@@ -181,17 +208,17 @@ class _GainsTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(value,
               style: TextStyle(
-                  color: color,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800)),
+                  color: color, fontSize: 15, fontWeight: FontWeight.w800)),
         ],
       ),
     );
   }
 }
 
-class _HistoryItem extends StatelessWidget {
-  const _HistoryItem({required this.investment});
+// ── Contract card ──────────────────────────────────────────────────────────────
+
+class _ContractCard extends StatelessWidget {
+  const _ContractCard({required this.investment});
 
   final Investment investment;
 
@@ -204,75 +231,256 @@ class _HistoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = investment.isActive;
-    final color = isActive ? AppColors.neonCyan : AppColors.textMuted;
+    final accentColor = isActive ? AppColors.neonCyan : AppColors.textMuted;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accentColor.withValues(alpha: 0.25)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isActive ? Icons.trending_up_rounded : Icons.check_circle_outline,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header — plano + status
+            Row(
               children: [
-                Text(
-                  'Plano ${investment.planName}',
-                  style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Plano ${investment.planName}',
+                    style: TextStyle(
+                        color: accentColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13),
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Contratado em ${_fmtDate(investment.contractedAt)} · Término ${_fmtDate(investment.maturityDate)}',
-                  style: TextStyle(
-                      color: AppColors.textMuted.withValues(alpha: 0.8),
-                      fontSize: 11),
+                const Spacer(),
+                _StatusBadge(status: investment.status),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Valores — aplicação e rendimento
+            Row(
+              children: [
+                Expanded(
+                  child: _ValueItem(
+                    label: 'Valor Aplicado',
+                    value: _fmt(investment.principal),
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Expanded(
+                  child: _ValueItem(
+                    label: 'Rendimento',
+                    value: _fmt(investment.accruedInterest),
+                    color: AppColors.neonGreen,
+                    suffix: ' acumulado',
+                  ),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            const SizedBox(height: 8),
+
+            // Projeção total
+            Row(
+              children: [
+                Expanded(
+                  child: _ValueItem(
+                    label: 'Rendimento Projetado',
+                    value: _fmt(investment.projectedTotalInterest),
+                    color: AppColors.neonGreen.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+
+            // Barra de progresso do rendimento
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: investment.projectedTotalInterest > 0
+                  ? (investment.accruedInterest /
+                          investment.projectedTotalInterest)
+                      .clamp(0.0, 1.0)
+                  : 0,
+              backgroundColor: AppColors.neonGreen.withValues(alpha: 0.12),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.neonGreen),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_fmt(investment.accruedInterest)} de ${_fmt(investment.projectedTotalInterest)} projetado',
+              style: TextStyle(
+                  color: AppColors.textMuted.withValues(alpha: 0.7),
+                  fontSize: 11),
+            ),
+
+            const SizedBox(height: 14),
+            const Divider(color: Color(0xFF1E2D45), height: 1),
+            const SizedBox(height: 14),
+
+            // Datas
+            _DateRow(
+              icon: Icons.calendar_today_outlined,
+              label: 'Data de início',
+              value: _fmtDate(investment.contractedAt),
+            ),
+            const SizedBox(height: 8),
+            _DateRow(
+              icon: Icons.lock_open_outlined,
+              label: 'Saque de juros disponível',
+              value: _fmtDate(investment.interestWithdrawalDate),
+              highlight: !DateTime.now()
+                  .isBefore(investment.interestWithdrawalDate),
+              highlightLabel: isActive &&
+                      !DateTime.now()
+                          .isBefore(investment.interestWithdrawalDate)
+                  ? 'Disponível'
+                  : null,
+            ),
+            const SizedBox(height: 8),
+            _DateRow(
+              icon: Icons.flag_outlined,
+              label: 'Data de término',
+              value: _fmtDate(investment.maturityDate),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ValueItem extends StatelessWidget {
+  const _ValueItem(
+      {required this.label,
+      required this.value,
+      required this.color,
+      this.suffix});
+
+  final String label;
+  final String value;
+  final Color color;
+  final String? suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(
+                color: AppColors.textMuted.withValues(alpha: 0.8),
+                fontSize: 11)),
+        const SizedBox(height: 2),
+        RichText(
+          text: TextSpan(
             children: [
-              Text(
-                _fmt(investment.principal),
-                style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14),
+              TextSpan(
+                text: value,
+                style: TextStyle(
+                    color: color,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 2),
-              Text(
-                '+${_fmt(investment.accruedInterest)}',
-                style: const TextStyle(
-                    color: AppColors.neonGreen,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12),
-              ),
+              if (suffix != null)
+                TextSpan(
+                  text: suffix,
+                  style: TextStyle(
+                      color: color.withValues(alpha: 0.6), fontSize: 11),
+                ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DateRow extends StatelessWidget {
+  const _DateRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.highlight = false,
+    this.highlightLabel,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool highlight;
+  final String? highlightLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = highlight ? AppColors.neonGreen : AppColors.textMuted;
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 6),
+        Text(label,
+            style: TextStyle(
+                color: AppColors.textMuted.withValues(alpha: 0.8),
+                fontSize: 12)),
+        const Spacer(),
+        if (highlightLabel != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.neonGreen.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(highlightLabel!,
+                style: const TextStyle(
+                    color: AppColors.neonGreen,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(width: 6),
         ],
+        Text(value,
+            style: TextStyle(
+                color: highlight ? AppColors.neonGreen : AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      'ACTIVE' => ('Ativo', AppColors.neonGreen),
+      'MATURED' => ('Encerrado', AppColors.textMuted),
+      _ => ('Resgatado', AppColors.textMuted),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontSize: 11, fontWeight: FontWeight.w700)),
     );
   }
 }

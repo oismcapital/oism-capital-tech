@@ -25,7 +25,10 @@ class MainShellState extends State<MainShell> {
 
   static const _titles = ['Home', 'Investir', 'Ganhos', 'Indicar', 'Perfil'];
 
-  int get _stackIndex => _index > 1 ? _index - 1 : _index;
+  // stackIndex maps nav index to IndexedStack index
+  // Nav:   0=Home, 1=Investir, 2=Ganhos, 3=Indicar, 4=Perfil
+  // Stack: 0=Home, 1=Investir, 2=Ganhos, 3=Indicar, 4=Perfil
+  int get _stackIndex => _index;
 
   void goTo(int index) {
     if (index >= 0 && index < _titles.length) {
@@ -33,8 +36,18 @@ class MainShellState extends State<MainShell> {
     }
   }
 
-  void _openDeposit() {
-    Navigator.of(context).push(
+  final _homeKey = HomePageKey();
+  final _ganhosKey = GlobalKey<GanhosPageState>();
+  final _perfilKey = GlobalKey<PerfilPageState>();
+
+  void _reloadAll() {
+    _homeKey.currentState?.reload();
+    _ganhosKey.currentState?.reload();
+    _perfilKey.currentState?.reload();
+  }
+
+  void _openDeposit() async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider(
           create: (c) => DepositNotifier(c.read<Dio>()),
@@ -42,26 +55,25 @@ class MainShellState extends State<MainShell> {
         ),
       ),
     );
+    _reloadAll();
   }
 
-  void _openPlanSelection() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PlanSelectionScreen()),
-    );
-  }
-
-  void _openWithdraw() {
-    Navigator.of(context).push(
+  void _openWithdraw() async {
+    await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const WithdrawPage()),
     );
+    _reloadAll();
   }
 
   void _onNavTap(int i) {
-    if (i == 1) {
-      _openPlanSelection();
-      return;
-    }
     setState(() => _index = i);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      switch (i) {
+        case 0: _homeKey.currentState?.reload(); break;
+        case 2: _ganhosKey.currentState?.reload(); break;
+        case 4: _perfilKey.currentState?.reload(); break;
+      }
+    });
   }
   @override
   Widget build(BuildContext context) {
@@ -72,10 +84,11 @@ class MainShellState extends State<MainShell> {
       body: IndexedStack(
         index: _stackIndex,
         children: [
-          HomePage(onDepositar: _openDeposit, onSacar: _openWithdraw),
-          const GanhosPage(),
+          HomePage(key: _homeKey, onDepositar: _openDeposit, onSacar: _openWithdraw),
+          const PlanSelectionScreen(),
+          GanhosPage(key: _ganhosKey),
           const IndicarPage(),
-          const PerfilPage(),
+          PerfilPage(key: _perfilKey),
         ],
       ),
       bottomNavigationBar: NavigationBar(

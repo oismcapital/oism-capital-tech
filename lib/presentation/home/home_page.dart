@@ -9,6 +9,10 @@ import '../../domain/repositories/finance_repository.dart';
 import '../widgets/performance_line_chart.dart';
 import '../widgets/robot_trader_illustration.dart';
 
+class HomePageKey extends GlobalKey<_HomePageState> {
+  const HomePageKey() : super.constructor();
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key, this.onDepositar, this.onSacar});
   final VoidCallback? onDepositar;
@@ -41,6 +45,8 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
+  void reload() => _load();
+
   Future<void> _load() async {
     if (!mounted) return;
     setState(() => _loading = true);
@@ -67,14 +73,18 @@ class _HomePageState extends State<HomePage>
 
   double _pct() {
     final s = _summary;
-    if (s == null || s.investedBalance == 0) return 0;
-    return (s.dailyProfit / s.investedBalance) * 100;
+    if (s == null || s.totalInvested == 0) return 0;
+    return (s.dailyProfit / s.totalInvested) * 100;
   }
 
   List<double> _points() {
     final s = _summary;
     if (s != null && s.performancePoints.length > 1) return s.performancePoints;
-    return List.generate(20, (i) => 80 + math.pow(i * 0.6, 1.6).toDouble());
+    // Fallback: flat line at current accrued interest
+    if (s != null && s.totalAccruedInterest > 0) {
+      return [0, s.totalAccruedInterest];
+    }
+    return [];
   }
 
   @override
@@ -102,8 +112,10 @@ class _HomePageState extends State<HomePage>
           const SizedBox(height: 16),
           _buildMainCard(s),
           const SizedBox(height: 16),
-          _buildRobotStatus(),
-          const SizedBox(height: 14),
+          if (s != null && s.totalInvested > 0) ...[
+            _buildRobotStatus(),
+            const SizedBox(height: 14),
+          ],
           _buildButtons(),
           const SizedBox(height: 20),
           _buildChartCard(),
@@ -124,7 +136,7 @@ class _HomePageState extends State<HomePage>
             border: Border.all(color: AppColors.neonCyan, width: 2),
             color: AppColors.surface,
           ),
-          child: const Icon(Icons.currency_bitcoin,
+          child: const Icon(Icons.currency_exchange_rounded,
               color: AppColors.neonCyan, size: 18),
         ),
         const SizedBox(width: 10),
@@ -440,8 +452,27 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  // ── Gráfico ──────────────────────────────────────────────────────────────────
   Widget _buildChartCard() {
+    final s = _summary;
+    final points = _points();
+
+    // Generate day labels based on number of points
+    List<String> labels = [];
+    if (points.length >= 2) {
+      final today = DateTime.now();
+      final startDay = today.subtract(Duration(days: points.length - 1));
+      // Show ~5 evenly spaced labels
+      final step = (points.length / 4).ceil();
+      for (int i = 0; i < points.length; i++) {
+        if (i % step == 0 || i == points.length - 1) {
+          final d = startDay.add(Duration(days: i));
+          labels.add('${d.day}/${d.month}');
+        } else {
+          labels.add('');
+        }
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
@@ -458,24 +489,32 @@ class _HomePageState extends State<HomePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Rendimentos',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              const Text(
+                'Rendimentos',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              if (s != null && s.totalAccruedInterest > 0)
+                Text(
+                  '+R\$ ${s.totalAccruedInterest.toStringAsFixed(2).replaceAll('.', ',')}',
+                  style: const TextStyle(
+                    color: AppColors.neonGreen,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           PerformanceLineChart(
-            points: _points(),
-            bottomAxisLabels: const [
-              'Mês 1',
-              'Mês 2',
-              'Mês 3',
-              'Mês 4',
-              'Mês 5',
-            ],
+            points: points,
+            bottomAxisLabels: labels.isEmpty ? null : labels,
           ),
         ],
       ),

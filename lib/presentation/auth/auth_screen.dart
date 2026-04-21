@@ -139,6 +139,27 @@ class _AuthScreenState extends State<AuthScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 48),
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.neonCyan, width: 2),
+                    color: AppColors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.neonCyan.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.currency_exchange_rounded,
+                      color: AppColors.neonCyan, size: 32),
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'OISM Capital Tech',
                 textAlign: TextAlign.center,

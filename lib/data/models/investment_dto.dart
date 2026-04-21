@@ -16,16 +16,16 @@ class InvestmentDto {
   });
 
   factory InvestmentDto.fromJson(Map<String, dynamic> json) => InvestmentDto(
-        id: json['id'] as int,
+        id: (json['id'] as num).toInt(),
         planId: json['planId'] as String,
         planName: json['planName'] as String,
         principal: _d(json['principal']),
         accruedInterest: _d(json['accruedInterest']),
         projectedTotalInterest: _d(json['projectedTotalInterest']),
         status: json['status'] as String,
-        contractedAt: DateTime.parse(json['contractedAt'] as String),
-        interestWithdrawalDate: DateTime.parse(json['interestWithdrawalDate'] as String),
-        maturityDate: DateTime.parse(json['maturityDate'] as String),
+        contractedAt: _parseDate(json['contractedAt']),
+        interestWithdrawalDate: _parseDate(json['interestWithdrawalDate']),
+        maturityDate: _parseDate(json['maturityDate']),
         interestWithdrawable: json['interestWithdrawable'] as bool? ?? false,
       );
 
@@ -33,6 +33,14 @@ class InvestmentDto {
     if (v == null) return 0;
     if (v is num) return v.toDouble();
     return double.tryParse(v.toString()) ?? 0;
+  }
+
+  static DateTime _parseDate(dynamic v) {
+    if (v == null) return DateTime.now();
+    final s = v.toString();
+    // LocalDate comes as "2026-04-21", LocalDateTime as "2026-04-21T17:15:30"
+    if (s.length == 10) return DateTime.parse('${s}T00:00:00');
+    return DateTime.parse(s);
   }
 
   final int id;

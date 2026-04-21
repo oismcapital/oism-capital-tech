@@ -10,10 +10,11 @@ class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
 
   @override
-  State<PerfilPage> createState() => _PerfilPageState();
+  State<PerfilPage> createState() => PerfilPageState();
 }
 
-class _PerfilPageState extends State<PerfilPage> {
+class PerfilPageState extends State<PerfilPage> {
+  void reload() => _load();
   double _walletBalance = 0;
   bool _loading = true;
 
