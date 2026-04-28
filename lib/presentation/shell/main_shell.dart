@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../deposit/deposit_page.dart';
 import '../deposit/deposit_notifier.dart';
+import '../extrato/extrato_page.dart';
 import '../ganhos/ganhos_page.dart';
 import '../home/home_page.dart';
-import '../indicar/indicar_page.dart';
 import '../payment/plan_selection_screen.dart';
 import '../perfil/perfil_page.dart';
 import '../withdraw/withdraw_page.dart';
 import 'package:provider/provider.dart';
-import '../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
 
 class MainShell extends StatefulWidget {
@@ -23,27 +22,22 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   int _index = 0;
 
-  static const _titles = ['Home', 'Investir', 'Ganhos', 'Indicar', 'Perfil'];
+  static const _titles = ['Home', 'Investir', 'Ganhos', 'Extrato', 'Perfil'];
 
-  // stackIndex maps nav index to IndexedStack index
-  // Nav:   0=Home, 1=Investir, 2=Ganhos, 3=Indicar, 4=Perfil
-  // Stack: 0=Home, 1=Investir, 2=Ganhos, 3=Indicar, 4=Perfil
   int get _stackIndex => _index;
-
-  void goTo(int index) {
-    if (index >= 0 && index < _titles.length) {
-      setState(() => _index = index);
-    }
-  }
 
   final _homeKey = HomePageKey();
   final _ganhosKey = GlobalKey<GanhosPageState>();
+  final _extratoKey = GlobalKey<ExtratoPageState>();
   final _perfilKey = GlobalKey<PerfilPageState>();
+  final _investirKey = GlobalKey<PlanSelectionScreenState>();
 
   void _reloadAll() {
     _homeKey.currentState?.reload();
     _ganhosKey.currentState?.reload();
+    _extratoKey.currentState?.reload();
     _perfilKey.currentState?.reload();
+    _investirKey.currentState?.reload();
   }
 
   void _openDeposit() async {
@@ -70,11 +64,14 @@ class MainShellState extends State<MainShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       switch (i) {
         case 0: _homeKey.currentState?.reload(); break;
+        case 1: _investirKey.currentState?.reload(); break;
         case 2: _ganhosKey.currentState?.reload(); break;
+        case 3: _extratoKey.currentState?.reload(); break;
         case 4: _perfilKey.currentState?.reload(); break;
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,9 +82,9 @@ class MainShellState extends State<MainShell> {
         index: _stackIndex,
         children: [
           HomePage(key: _homeKey, onDepositar: _openDeposit, onSacar: _openWithdraw),
-          const PlanSelectionScreen(),
+          PlanSelectionScreen(key: _investirKey),
           GanhosPage(key: _ganhosKey),
-          const IndicarPage(),
+          ExtratoPage(key: _extratoKey),
           PerfilPage(key: _perfilKey),
         ],
       ),
@@ -111,9 +108,9 @@ class MainShellState extends State<MainShell> {
             label: 'Ganhos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: 'Indicar',
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
+            label: 'Extrato',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

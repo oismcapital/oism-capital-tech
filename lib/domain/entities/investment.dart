@@ -5,6 +5,7 @@ class Investment {
     required this.planName,
     required this.principal,
     required this.accruedInterest,
+    required this.withdrawnInterest,
     required this.projectedTotalInterest,
     required this.status,
     required this.contractedAt,
@@ -18,6 +19,7 @@ class Investment {
   final String planName;
   final double principal;
   final double accruedInterest;
+  final double withdrawnInterest;
   final double projectedTotalInterest;
   final String status;
   final DateTime contractedAt;
@@ -27,4 +29,7 @@ class Investment {
 
   bool get isActive => status == 'ACTIVE';
   bool get isMatured => status == 'MATURED';
+
+  /// Total interest earned = accrued (current) + already withdrawn
+  double get totalInterestEarned => accruedInterest + withdrawnInterest;
 }

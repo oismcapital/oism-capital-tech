@@ -19,6 +19,8 @@ class _WithdrawPageState extends State<WithdrawPage> {
   final _pixKeyCtrl = TextEditingController();
   bool _loading = false;
   double _walletBalance = 0;
+  double _withdrawableInterest = 0;
+  double _withdrawableBalance = 0;
 
   @override
   void initState() {
@@ -36,7 +38,11 @@ class _WithdrawPageState extends State<WithdrawPage> {
   Future<void> _loadBalance() async {
     try {
       final summary = await context.read<FinanceRepository>().getSummary();
-      if (mounted) setState(() => _walletBalance = summary.walletBalance);
+      if (mounted) setState(() {
+        _walletBalance = summary.walletBalance;
+        _withdrawableInterest = summary.withdrawableInterest;
+        _withdrawableBalance = summary.withdrawableBalance;
+      });
     } catch (_) {}
   }
 
@@ -95,7 +101,7 @@ class _WithdrawPageState extends State<WithdrawPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Saldo disponível
+              // Saldo disponível para saque
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -104,26 +110,69 @@ class _WithdrawPageState extends State<WithdrawPage> {
                   border: Border.all(
                       color: AppColors.neonCyan.withValues(alpha: 0.3)),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.account_balance_wallet_outlined,
-                        color: AppColors.neonCyan),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        const Text('Saldo disponível',
-                            style: TextStyle(
-                                color: AppColors.textMuted, fontSize: 12)),
-                        Text(
-                          'R\$ ${_walletBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-                          style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800),
+                        const Icon(Icons.account_balance_wallet_outlined,
+                            color: AppColors.neonCyan),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Disponível para saque',
+                                style: TextStyle(
+                                    color: AppColors.textMuted, fontSize: 12)),
+                            Text(
+                              'R\$ ${_withdrawableBalance.toStringAsFixed(2).replaceAll('.', ',')}',
+                              style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    if (_withdrawableInterest > 0) ...[
+                      const SizedBox(height: 10),
+                      const Divider(color: Color(0xFF1E2D45), height: 1),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Saldo em conta',
+                              style: TextStyle(
+                                  color: AppColors.textMuted.withValues(alpha: 0.8),
+                                  fontSize: 12)),
+                          Text(
+                            'R\$ ${_walletBalance.toStringAsFixed(2).replaceAll('.', ',')}',
+                            style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Juros liberados (D+15)',
+                              style: TextStyle(
+                                  color: AppColors.textMuted.withValues(alpha: 0.8),
+                                  fontSize: 12)),
+                          Text(
+                            '+R\$ ${_withdrawableInterest.toStringAsFixed(2).replaceAll('.', ',')}',
+                            style: const TextStyle(
+                                color: AppColors.neonGreen,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -147,7 +196,9 @@ class _WithdrawPageState extends State<WithdrawPage> {
                   final amount =
                       double.tryParse(v.replaceAll(',', '.')) ?? 0;
                   if (amount <= 0) return 'Valor inválido';
-                  if (amount > _walletBalance) return 'Saldo insuficiente';
+                  if (amount > _withdrawableBalance) {
+                    return 'Valor máximo: R\$ ${_withdrawableBalance.toStringAsFixed(2).replaceAll('.', ',')}';
+                  }
                   return null;
                 },
               ),

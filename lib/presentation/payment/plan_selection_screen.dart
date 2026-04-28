@@ -11,14 +11,16 @@ class PlanSelectionScreen extends StatefulWidget {
   const PlanSelectionScreen({super.key});
 
   @override
-  State<PlanSelectionScreen> createState() => _PlanSelectionScreenState();
+  State<PlanSelectionScreen> createState() => PlanSelectionScreenState();
 }
 
-class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
+class PlanSelectionScreenState extends State<PlanSelectionScreen> {
   List<Plan> _plans = [];
   bool _loadingPlans = true;
   double _walletBalance = 0;
   String? _loadError;
+
+  void reload() => _load();
 
   @override
   void initState() {

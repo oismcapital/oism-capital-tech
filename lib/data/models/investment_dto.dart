@@ -7,6 +7,7 @@ class InvestmentDto {
     required this.planName,
     required this.principal,
     required this.accruedInterest,
+    required this.withdrawnInterest,
     required this.projectedTotalInterest,
     required this.status,
     required this.contractedAt,
@@ -21,6 +22,7 @@ class InvestmentDto {
         planName: json['planName'] as String,
         principal: _d(json['principal']),
         accruedInterest: _d(json['accruedInterest']),
+        withdrawnInterest: _d(json['withdrawnInterest']),
         projectedTotalInterest: _d(json['projectedTotalInterest']),
         status: json['status'] as String,
         contractedAt: _parseDate(json['contractedAt']),
@@ -48,6 +50,7 @@ class InvestmentDto {
   final String planName;
   final double principal;
   final double accruedInterest;
+  final double withdrawnInterest;
   final double projectedTotalInterest;
   final String status;
   final DateTime contractedAt;
@@ -61,6 +64,7 @@ class InvestmentDto {
         planName: planName,
         principal: principal,
         accruedInterest: accruedInterest,
+        withdrawnInterest: withdrawnInterest,
         projectedTotalInterest: projectedTotalInterest,
         status: status,
         contractedAt: contractedAt,

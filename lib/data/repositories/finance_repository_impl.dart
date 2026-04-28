@@ -19,6 +19,8 @@ class FinanceRepositoryImpl implements FinanceRepository {
       walletBalance: dto.walletBalance,
       totalInvested: dto.totalInvested,
       totalAccruedInterest: dto.totalAccruedInterest,
+      withdrawableInterest: dto.withdrawableInterest,
+      withdrawableBalance: dto.withdrawableBalance,
       dailyProfit: dto.dailyProfit,
       performancePoints: dto.performancePoints ?? [],
       valorEscondido: dto.valorEscondido,

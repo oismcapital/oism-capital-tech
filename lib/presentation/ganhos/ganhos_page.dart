@@ -281,24 +281,28 @@ class _ContractCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: _ValueItem(
-                    label: 'Rendimento',
+                    label: 'Rendimento Atual',
                     value: _fmt(investment.accruedInterest),
                     color: AppColors.neonGreen,
-                    suffix: ' acumulado',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-
-            // Projeção total
             Row(
               children: [
                 Expanded(
                   child: _ValueItem(
-                    label: 'Rendimento Projetado',
-                    value: _fmt(investment.projectedTotalInterest),
-                    color: AppColors.neonGreen.withValues(alpha: 0.7),
+                    label: 'Juros Resgatados',
+                    value: _fmt(investment.withdrawnInterest),
+                    color: AppColors.neonCyan,
+                  ),
+                ),
+                Expanded(
+                  child: _ValueItem(
+                    label: 'Total Ganho',
+                    value: _fmt(investment.totalInterestEarned),
+                    color: AppColors.neonGreen.withValues(alpha: 0.8),
                   ),
                 ),
               ],

@@ -318,22 +318,26 @@ class _HomePageState extends State<HomePage>
                                 ? 'Value Hidden'
                                 : (s == null
                                     ? '—'
-                                    : 'Lucro do dia ${_fmtPct(_pct())}'),
+                                    : s.dailyProfit > 0
+                                        ? 'Lucro do dia +R\$ ${s.dailyProfit.toStringAsFixed(2).replaceAll('.', ',')}'
+                                        : 'Sem rendimento hoje'),
                             style: TextStyle(
                               color: _hideBalance
                                   ? AppColors.textMuted
-                                  : AppColors.neonGreen,
+                                  : s != null && s.dailyProfit > 0
+                                      ? AppColors.neonGreen
+                                      : AppColors.textMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              shadows: _hideBalance
-                                  ? []
-                                  : [
+                              shadows: (!_hideBalance && s != null && s.dailyProfit > 0)
+                                  ? [
                                       Shadow(
                                         color: AppColors.neonGreen
                                             .withValues(alpha: 0.6),
                                         blurRadius: 8,
                                       ),
-                                    ],
+                                    ]
+                                  : [],
                             ),
                           ),
                         ],

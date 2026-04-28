@@ -254,6 +254,27 @@ class _InvestmentCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (investment.withdrawnInterest > 0) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _InfoItem(
+                      label: 'Juros Resgatados',
+                      value: _fmt(investment.withdrawnInterest),
+                      valueColor: AppColors.neonCyan,
+                    ),
+                  ),
+                  Expanded(
+                    child: _InfoItem(
+                      label: 'Total Ganho',
+                      value: _fmt(investment.totalInterestEarned),
+                      valueColor: AppColors.neonGreen.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 10),
             // Projeção de juros
             LinearProgressIndicator(

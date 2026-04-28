@@ -3,6 +3,8 @@ class FinanceSummaryDto {
     required this.walletBalance,
     required this.totalInvested,
     required this.totalAccruedInterest,
+    required this.withdrawableInterest,
+    required this.withdrawableBalance,
     required this.dailyProfit,
     this.performancePoints,
     this.valorEscondido = false,
@@ -18,6 +20,8 @@ class FinanceSummaryDto {
       walletBalance: _readDouble(json['walletBalance'] ?? json['investedBalance'] ?? json['saldo']),
       totalInvested: _readDouble(json['totalInvested']),
       totalAccruedInterest: _readDouble(json['totalAccruedInterest']),
+      withdrawableInterest: _readDouble(json['withdrawableInterest']),
+      withdrawableBalance: _readDouble(json['withdrawableBalance']),
       dailyProfit: _readDouble(json['dailyProfit'] ?? json['lucroDia'] ?? json['profit']),
       performancePoints: points,
       valorEscondido: json['valorEscondido'] as bool? ?? false,
@@ -33,6 +37,8 @@ class FinanceSummaryDto {
   final double walletBalance;
   final double totalInvested;
   final double totalAccruedInterest;
+  final double withdrawableInterest;
+  final double withdrawableBalance;
   final double dailyProfit;
   final List<double>? performancePoints;
   final bool valorEscondido;

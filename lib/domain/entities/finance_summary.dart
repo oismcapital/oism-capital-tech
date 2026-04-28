@@ -4,6 +4,8 @@ class FinanceSummary {
     required this.walletBalance,
     required this.totalInvested,
     required this.totalAccruedInterest,
+    required this.withdrawableInterest,
+    required this.withdrawableBalance,
     required this.dailyProfit,
     required this.performancePoints,
     this.valorEscondido = false,
@@ -12,10 +14,11 @@ class FinanceSummary {
   final double walletBalance;
   final double totalInvested;
   final double totalAccruedInterest;
+  final double withdrawableInterest;
+  final double withdrawableBalance;
   final double dailyProfit;
   final List<double> performancePoints;
   final bool valorEscondido;
 
-  // Compatibilidade legada
   double get investedBalance => walletBalance;
 }

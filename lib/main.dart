@@ -12,6 +12,7 @@ import 'data/services/auth_service.dart';
 import 'data/services/finance_service.dart';
 import 'data/services/investment_service.dart';
 import 'data/services/payment_service.dart';
+import 'data/services/statement_service.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'domain/repositories/finance_repository.dart';
 import 'domain/repositories/investment_repository.dart';
@@ -32,6 +33,7 @@ void main() {
         Provider<FinanceService>(create: (_) => FinanceService(dio)),
         Provider<PaymentService>(create: (_) => PaymentService(dio)),
         Provider<InvestmentService>(create: (_) => InvestmentService(dio)),
+        Provider<StatementService>(create: (_) => StatementService(dio)),
         Provider<AuthRepository>(
           create: (c) => AuthRepositoryImpl(c.read<AuthService>()),
         ),
